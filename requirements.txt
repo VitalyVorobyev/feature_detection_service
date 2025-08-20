@@ -1,0 +1,11 @@
+fastapi
+pillow
+pytest
+pytest-mock
+httpx
+python-multipart
+opencv-python
+opencv-contrib-python
+numpy
+pydantic
+requests
