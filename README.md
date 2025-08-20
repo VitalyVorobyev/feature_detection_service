@@ -30,8 +30,8 @@ The service works in conjunction with an Image Storage Service (ISS) to retrieve
 
 1. Clone this repository:
    ```bash
-   git clone <repository-url>
-   cd fds
+   git clone https://github.com/VitalyVorobyev/feature_detection_service.git
+   cd feature_detection_service
    ```
 
 2. Install dependencies:
@@ -41,7 +41,7 @@ The service works in conjunction with an Image Storage Service (ISS) to retrieve
 
 ## Configuration
 
-The service requires an Image Storage Service (ISS) to be available. Set the ISS URL through an environment variable:
+The service requires an [Image Storage Service (ISS)](https://github.com/VitalyVorobyev/image_store_service) to be available. Set the ISS URL through an environment variable:
 
 ```bash
 # Default: http://localhost:8081
