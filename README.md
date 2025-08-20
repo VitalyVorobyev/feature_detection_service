@@ -1,5 +1,7 @@
 # Feature Detection Service (FDS)
 
+[![FDS - Continuous Integration](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml)
+
 A (micro)service for detecting and extracting features from images using computer vision algorithms.
 
 ## Overview
