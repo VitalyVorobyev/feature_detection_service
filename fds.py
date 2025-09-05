@@ -12,6 +12,13 @@ class DetectReq(BaseModel):
     params: dict = {}
     return_overlay: bool = False
 
+
+class PatternDetectReq(BaseModel):
+    image_id: str
+    pattern: str = Field(description="charuco|circle_grid|chessboard|apriltag")
+    params: dict = {}
+    return_overlay: bool = False
+
 def load_image_from_iss(image_id: str) -> np.ndarray:
     r = requests.get(f"{ISS_URL}/images/{image_id}", timeout=30)
     if r.status_code != 200: raise HTTPException(404, "image not found")
@@ -42,11 +49,16 @@ def params_hash(d: dict) -> str:
     s = json.dumps(d, sort_keys=True, separators=(",",":"))
     return hashlib.sha256(s.encode()).hexdigest()[:16]
 
+def encode_png(img: np.ndarray) -> str:
+    ok, png = cv2.imencode(".png", img)
+    assert ok
+    return "data:image/png;base64," + base64.b64encode(png.tobytes()).decode()
+
+
 def encode_overlay(img: np.ndarray, kpts):
     overlay = img.copy()
     cv2.drawKeypoints(img, kpts, overlay, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    ok, png = cv2.imencode(".png", overlay); assert ok
-    return "data:image/png;base64," + base64.b64encode(png.tobytes()).decode()
+    return encode_png(overlay)
 
 @app.post("/detect")
 def detect(req: DetectReq):
@@ -91,6 +103,71 @@ def detect(req: DetectReq):
         resp["overlay_png"] = encode_overlay(img, kpts or [])
     return resp
 
+
+@app.post("/detect_pattern")
+def detect_pattern(req: PatternDetectReq):
+    img = load_image_from_iss(req.image_id)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    pattern = req.pattern
+    params = req.params
+    overlay = img.copy()
+    points = []
+    if pattern == "charuco":
+        dictionary = cv2.aruco.getPredefinedDictionary(
+            getattr(cv2.aruco, params.get("dictionary", "DICT_4X4_50")))
+        squares_x = int(params.get("squares_x", 5))
+        squares_y = int(params.get("squares_y", 7))
+        square_length = float(params.get("square_length", 1.0))
+        marker_length = float(params.get("marker_length", 0.5))
+        board = cv2.aruco.CharucoBoard_create(
+            squares_x, squares_y, square_length, marker_length, dictionary)
+        corners, ids, _ = cv2.aruco.detectMarkers(gray, dictionary)
+        if ids is not None and len(ids) > 0:
+            cv2.aruco.drawDetectedMarkers(overlay, corners, ids)
+            retval, ch_corners, ch_ids = cv2.aruco.interpolateCornersCharuco(
+                corners, ids, gray, board)
+            if retval and ch_ids is not None:
+                cv2.aruco.drawDetectedCornersCharuco(overlay, ch_corners, ch_ids)
+                for c, i in zip(ch_corners, ch_ids):
+                    points.append({"x": float(c[0][0]), "y": float(c[0][1]), "id": int(i)})
+    elif pattern == "circle_grid":
+        rows = int(params.get("rows", 4))
+        cols = int(params.get("cols", 5))
+        flags = cv2.CALIB_CB_SYMMETRIC_GRID if params.get("symmetric", True) else cv2.CALIB_CB_ASYMMETRIC_GRID
+        found, centers = cv2.findCirclesGrid(gray, (cols, rows), flags=flags)
+        if found:
+            cv2.drawChessboardCorners(overlay, (cols, rows), centers, found)
+            points = [{"x": float(p[0][0]), "y": float(p[0][1])} for p in centers]
+    elif pattern == "chessboard":
+        rows = int(params.get("rows", 7))
+        cols = int(params.get("cols", 7))
+        found, corners = cv2.findChessboardCorners(gray, (cols, rows))
+        if found:
+            cv2.drawChessboardCorners(overlay, (cols, rows), corners, found)
+            points = [{"x": float(p[0][0]), "y": float(p[0][1])} for p in corners]
+    elif pattern == "apriltag":
+        dictionary = cv2.aruco.getPredefinedDictionary(
+            getattr(cv2.aruco, params.get("dictionary", "DICT_APRILTAG_36h11")))
+        corners, ids, _ = cv2.aruco.detectMarkers(gray, dictionary)
+        if ids is not None and len(ids) > 0:
+            cv2.aruco.drawDetectedMarkers(overlay, corners, ids)
+            for c, i in zip(corners, ids.flatten()):
+                center = c[0].mean(axis=0)
+                points.append({"x": float(center[0]), "y": float(center[1]), "id": int(i)})
+    else:
+        raise HTTPException(400, f"unknown pattern {pattern}")
+    resp = {
+        "image_id": req.image_id,
+        "pattern": pattern,
+        "algo_version": algo_version(pattern),
+        "params_hash": params_hash(params),
+        "count": len(points),
+        "points": points,
+    }
+    if req.return_overlay:
+        resp["overlay_png"] = encode_png(overlay)
+    return resp
+
 @app.get("/algos")
 def algos():
     return [
@@ -98,6 +175,34 @@ def algos():
         {"name":"sift","params":{"n_features":"int"}},
         {"name":"akaze","params":{}},
         {"name":"brisk","params":{}},
+    ]
+
+
+@app.get("/patterns")
+def patterns():
+    return [
+        {
+            "name": "charuco",
+            "params": {
+                "squares_x": "int",
+                "squares_y": "int",
+                "square_length": "float",
+                "marker_length": "float",
+                "dictionary": "str",
+            },
+        },
+        {
+            "name": "circle_grid",
+            "params": {"rows": "int", "cols": "int", "symmetric": "bool"},
+        },
+        {
+            "name": "chessboard",
+            "params": {"rows": "int", "cols": "int"},
+        },
+        {
+            "name": "apriltag",
+            "params": {"dictionary": "str"},
+        },
     ]
 
 @app.get("/healthz")

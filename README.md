@@ -6,13 +6,14 @@ A (micro)service for detecting and extracting features from images using compute
 
 ## Overview
 
-Feature Detection Service is a FastAPI-based application that provides image feature detection capabilities through a RESTful API. It supports multiple feature detection algorithms from OpenCV such as ORB, SIFT, AKAZE, and BRISK.
+Feature Detection Service is a FastAPI-based application that provides image feature and pattern detection capabilities through a RESTful API. It supports multiple feature detection algorithms from OpenCV such as ORB, SIFT, AKAZE, and BRISK as well as pattern detectors for ChArUco boards, circle grids, chessboards, and AprilTags.
 
 The service works in conjunction with an Image Storage Service (ISS) to retrieve images and store feature detection results.
 
 ## Features
 
 - Feature detection using multiple algorithms (ORB, SIFT, AKAZE, BRISK)
+- Pattern detection for calibration targets (ChArUco, circle grid, chessboard, AprilTag)
 - Customizable algorithm parameters
 - Storage of feature keypoints and descriptors
 - Optional visualization with feature overlay generation
@@ -90,7 +91,7 @@ Detect features in an image.
   "count": 0,               // Number of features detected
   "summary": [],            // Summary of detected features
   "features_artifact_id": "string",
-  "overlay_png": "string"   // Base64 encoded PNG (if requested)
+"overlay_png": "string"   // Base64 encoded PNG (if requested)
 }
 ```
 
@@ -127,6 +128,77 @@ Get information about supported algorithms and their parameters.
 ]
 ```
 
+#### POST /detect_pattern
+
+Detect calibration patterns such as ChArUco boards, circle grids, chessboards and AprilTags.
+
+**Request Body:**
+
+```json
+{
+  "image_id": "string",      // ID of the image in the ISS
+  "pattern": "string",       // "charuco", "circle_grid", "chessboard", or "apriltag"
+  "params": {},              // Pattern-specific parameters
+  "return_overlay": false    // Whether to return visualization overlay
+}
+```
+
+**Response:**
+
+```json
+{
+  "image_id": "string",
+  "pattern": "string",
+  "algo_version": "string",
+  "params_hash": "string",
+  "count": 0,               // Number of pattern points detected
+  "points": [],             // Detected points with optional IDs
+  "overlay_png": "string"   // Base64 encoded PNG (if requested)
+}
+```
+
+#### GET /patterns
+
+Get information about supported pattern detectors and their parameters.
+
+**Response:**
+
+```json
+[
+  {
+    "name": "charuco",
+    "params": {
+      "squares_x": "int",
+      "squares_y": "int",
+      "square_length": "float",
+      "marker_length": "float",
+      "dictionary": "str"
+    }
+  },
+  {
+    "name": "circle_grid",
+    "params": {
+      "rows": "int",
+      "cols": "int",
+      "symmetric": "bool"
+    }
+  },
+  {
+    "name": "chessboard",
+    "params": {
+      "rows": "int",
+      "cols": "int"
+    }
+  },
+  {
+    "name": "apriltag",
+    "params": {
+      "dictionary": "str"
+    }
+  }
+]
+```
+
 #### GET /healthz
 
 Health check endpoint.
@@ -147,6 +219,15 @@ Health check endpoint.
 | SIFT      | n_features | Scale-Invariant Feature Transform |
 | AKAZE     | - | Accelerated-KAZE features |
 | BRISK     | - | Binary Robust Invariant Scalable Keypoints |
+
+## Supported Pattern Detectors
+
+| Pattern | Parameters | Description |
+|---------|------------|-------------|
+| charuco | squares_x, squares_y, square_length, marker_length, dictionary | ChArUco board corner detection |
+| circle_grid | rows, cols, symmetric | Circle grid center detection |
+| chessboard | rows, cols | Chessboard corner detection |
+| apriltag | dictionary | AprilTag marker detection |
 
 ## Algorithm Parameters
 
@@ -181,6 +262,20 @@ curl -X 'POST' \
   "image_id": "sample_image_id",
   "algo": "orb",
   "params": {"n_features": 5000},
+  "return_overlay": true
+}'
+```
+
+### Detecting Patterns
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8080/detect_pattern' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "image_id": "sample_image_id",
+  "pattern": "chessboard",
+  "params": {"rows": 7, "cols": 7},
   "return_overlay": true
 }'
 ```
