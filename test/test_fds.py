@@ -32,14 +32,14 @@ def test_load_image_from_iss(mock_response, sample_image):
     # Encode the sample image to simulate the image response
     _, img_encoded = cv2.imencode('.png', sample_image)
     mock_response.content = img_encoded.tobytes()
-    
+
     with patch('requests.get', return_value=mock_response) as mock_get:
         # Call the function with a dummy image ID
         result = load_image_from_iss('test_image_id')
-        
+
         # Assert the mock was called with expected URL
-        mock_get.assert_called_once_with(f"http://localhost:8081/images/test_image_id", timeout=30)
-        
+        mock_get.assert_called_once_with(f"http://localhost:8000/images/test_image_id", timeout=30)
+
         # Check that returned image has the same shape as our sample
         assert result.shape == sample_image.shape
         # Basic validation that image processing worked

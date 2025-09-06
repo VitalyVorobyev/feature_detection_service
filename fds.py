@@ -1,10 +1,28 @@
 # fds/main.py
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import requests, cv2, numpy as np, json, hashlib, base64, os
 
-ISS_URL = os.environ.get("ISS_URL", "http://localhost:8081")
+from features import detect_charuco
+
+ISS_URL = os.environ.get("ISS_URL", "http://localhost:8000")
 app = FastAPI(title="Feature Detection Service")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,  # set False if you don’t use cookies/auth
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    # allow_headers can be "*", but if you prefer explicit list, include the ones you use:
+    allow_headers=["*"],  # or ["Authorization","Content-Type","X-Request-Id","Range"]
+    # expose headers you need to read from JS (useful for Range/ETag):
+    expose_headers=["Content-Range", "ETag"],
+    max_age=86400,
+)
 
 class DetectReq(BaseModel):
     image_id: str
@@ -25,6 +43,7 @@ def load_image_from_iss(image_id: str) -> np.ndarray:
     buf = np.frombuffer(r.content, np.uint8)
     img = cv2.imdecode(buf, cv2.IMREAD_COLOR)
     if img is None: raise HTTPException(400, "invalid image bytes")
+    print(f"Loaded image {image_id} from ISS {ISS_URL}, shape={img.shape}")
     return img
 
 def algo_version(algo: str) -> str:
@@ -107,54 +126,67 @@ def detect(req: DetectReq):
 @app.post("/detect_pattern")
 def detect_pattern(req: PatternDetectReq):
     img = load_image_from_iss(req.image_id)
+    print(img.shape)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    print(gray.shape)
+    overlay = img.copy()
     pattern = req.pattern
     params = req.params
-    overlay = img.copy()
-    points = []
-    if pattern == "charuco":
-        dictionary = cv2.aruco.getPredefinedDictionary(
-            getattr(cv2.aruco, params.get("dictionary", "DICT_4X4_50")))
-        squares_x = int(params.get("squares_x", 5))
-        squares_y = int(params.get("squares_y", 7))
-        square_length = float(params.get("square_length", 1.0))
-        marker_length = float(params.get("marker_length", 0.5))
-        board = cv2.aruco.CharucoBoard((squares_x, squares_y), square_length, marker_length, dictionary)
-        corners, ids, _ = cv2.aruco.detectMarkers(gray, dictionary)
-        if ids is not None and len(ids) > 0:
-            cv2.aruco.drawDetectedMarkers(overlay, corners, ids)
-            retval, ch_corners, ch_ids = cv2.aruco.interpolateCornersCharuco(
-                corners, ids, gray, board)
-            if retval and ch_ids is not None:
-                cv2.aruco.drawDetectedCornersCharuco(overlay, ch_corners, ch_ids)
-                for c, i in zip(ch_corners, ch_ids):
-                    points.append({"x": float(c[0][0]), "y": float(c[0][1]), "id": int(i)})
-    elif pattern == "circle_grid":
+
+    def use_detect_charuco(gray, overlay, params):
+        corners, ids, overlay = detect_charuco(gray, **params)
+        points = []
+        for i, c in zip(ids.flatten(), corners):
+            points.append({"x": float(c[0]), "y": float(c[1]), "id": int(i)})
+        return points
+
+    def detect_circle_grid(gray, overlay, params):
         rows = int(params.get("rows", 4))
         cols = int(params.get("cols", 5))
         flags = cv2.CALIB_CB_SYMMETRIC_GRID if params.get("symmetric", True) else cv2.CALIB_CB_ASYMMETRIC_GRID
         found, centers = cv2.findCirclesGrid(gray, (cols, rows), flags=flags)
+        points = []
         if found:
             cv2.drawChessboardCorners(overlay, (cols, rows), centers, found)
             points = [{"x": float(p[0][0]), "y": float(p[0][1])} for p in centers]
-    elif pattern == "chessboard":
+        return points
+
+    def detect_chessboard(gray, overlay, params):
         rows = int(params.get("rows", 7))
         cols = int(params.get("cols", 7))
         found, corners = cv2.findChessboardCorners(gray, (cols, rows))
+        points = []
         if found:
             cv2.drawChessboardCorners(overlay, (cols, rows), corners, found)
             points = [{"x": float(p[0][0]), "y": float(p[0][1])} for p in corners]
-    elif pattern == "apriltag":
+        return points
+
+    def detect_apriltag(gray, overlay, params):
         dictionary = cv2.aruco.getPredefinedDictionary(
             getattr(cv2.aruco, params.get("dictionary", "DICT_APRILTAG_36h11")))
         corners, ids, _ = cv2.aruco.detectMarkers(gray, dictionary)
+        points = []
         if ids is not None and len(ids) > 0:
             cv2.aruco.drawDetectedMarkers(overlay, corners, ids)
             for c, i in zip(corners, ids.flatten()):
                 center = c[0].mean(axis=0)
                 points.append({"x": float(center[0]), "y": float(center[1]), "id": int(i)})
-    else:
+        return points
+
+    pattern_funcs = {
+        "charuco": use_detect_charuco,
+        "circle_grid": detect_circle_grid,
+        "chessboard": detect_chessboard,
+        "apriltag": detect_apriltag,
+    }
+
+    if pattern not in pattern_funcs:
         raise HTTPException(400, f"unknown pattern {pattern}")
+
+    points = pattern_funcs[pattern](gray, overlay, params)
+    if points is None:
+        points = []
+
     resp = {
         "image_id": req.image_id,
         "pattern": pattern,
