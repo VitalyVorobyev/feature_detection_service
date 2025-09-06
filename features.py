@@ -8,7 +8,9 @@ def detect_charuco(gray: np.ndarray, squares_x=21, squares_y=21,
                    dictionary="DICT_5X5_1000",
                    return_overlay=False):
     """
-    Returns: points (N,2) float32, ids (N,), overlay (or None)
+    Returns: points (N,2) float32, ids (N,), object_points (N,3), overlay (or None).
+    object_points are the coordinates of the detected corners in the
+    board's local coordinate system (z=0 plane).
     """
     assert gray.ndim == 2 and gray.dtype == np.uint8
     H, W = gray.shape[:2]
@@ -100,7 +102,10 @@ def detect_charuco(gray: np.ndarray, squares_x=21, squares_y=21,
             ch_corners = ch_corners / 1.5
 
     if ch_ids is None or len(ch_ids) == 0:
-        return np.empty((0,2), np.float32), np.empty((0,), np.int32), (cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR) if return_overlay else None)
+        return (np.empty((0,2), np.float32),
+                np.empty((0,), np.int32),
+                np.empty((0,3), np.float32),
+                (cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR) if return_overlay else None))
 
     # subpix refine on original-res image
     term = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 40, 1e-3)
@@ -111,6 +116,7 @@ def detect_charuco(gray: np.ndarray, squares_x=21, squares_y=21,
 
     pts = ch_corners.reshape(-1, 2).astype(np.float32)
     ids = ch_ids.reshape(-1).astype(np.int32)
+    objpts = board.chessboardCorners[ids].astype(np.float32)
 
     overlay = None
     if return_overlay:
@@ -121,4 +127,4 @@ def detect_charuco(gray: np.ndarray, squares_x=21, squares_y=21,
             for (x,y) in pts:
                 cv2.circle(overlay, (int(round(x)), int(round(y))), 3, (0,255,0), -1)
 
-    return pts, ids, overlay
+    return pts, ids, objpts, overlay
