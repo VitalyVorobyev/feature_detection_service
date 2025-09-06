@@ -119,8 +119,7 @@ def detect_pattern(req: PatternDetectReq):
         squares_y = int(params.get("squares_y", 7))
         square_length = float(params.get("square_length", 1.0))
         marker_length = float(params.get("marker_length", 0.5))
-        board = cv2.aruco.CharucoBoard_create(
-            squares_x, squares_y, square_length, marker_length, dictionary)
+        board = cv2.aruco.CharucoBoard((squares_x, squares_y), square_length, marker_length, dictionary)
         corners, ids, _ = cv2.aruco.detectMarkers(gray, dictionary)
         if ids is not None and len(ids) > 0:
             cv2.aruco.drawDetectedMarkers(overlay, corners, ids)
