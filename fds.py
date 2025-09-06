@@ -134,10 +134,19 @@ def detect_pattern(req: PatternDetectReq):
     params = req.params
 
     def use_detect_charuco(gray, overlay, params):
-        corners, ids, overlay = detect_charuco(gray, **params)
+        corners, ids, objpts, ch_overlay = detect_charuco(gray, return_overlay=True, **params)
+        if ch_overlay is not None:
+            overlay[:]=ch_overlay
         points = []
-        for i, c in zip(ids.flatten(), corners):
-            points.append({"x": float(c[0]), "y": float(c[1]), "id": int(i)})
+        for i, c, o in zip(ids.flatten(), corners, objpts):
+            points.append({
+                "x": float(c[0]),
+                "y": float(c[1]),
+                "id": int(i),
+                "local_x": float(o[0]),
+                "local_y": float(o[1]),
+                "local_z": float(o[2]),
+            })
         return points
 
     def detect_circle_grid(gray, overlay, params):
@@ -148,7 +157,15 @@ def detect_pattern(req: PatternDetectReq):
         points = []
         if found:
             cv2.drawChessboardCorners(overlay, (cols, rows), centers, found)
-            points = [{"x": float(p[0][0]), "y": float(p[0][1])} for p in centers]
+            for idx, p in enumerate(centers):
+                col = idx % cols
+                row = idx // cols
+                points.append({
+                    "x": float(p[0][0]),
+                    "y": float(p[0][1]),
+                    "local_x": float(col),
+                    "local_y": float(row),
+                })
         return points
 
     def detect_chessboard(gray, overlay, params):
@@ -158,7 +175,15 @@ def detect_pattern(req: PatternDetectReq):
         points = []
         if found:
             cv2.drawChessboardCorners(overlay, (cols, rows), corners, found)
-            points = [{"x": float(p[0][0]), "y": float(p[0][1])} for p in corners]
+            for idx, p in enumerate(corners):
+                col = idx % cols
+                row = idx // cols
+                points.append({
+                    "x": float(p[0][0]),
+                    "y": float(p[0][1]),
+                    "local_x": float(col),
+                    "local_y": float(row),
+                })
         return points
 
     def detect_apriltag(gray, overlay, params):
@@ -170,7 +195,13 @@ def detect_pattern(req: PatternDetectReq):
             cv2.aruco.drawDetectedMarkers(overlay, corners, ids)
             for c, i in zip(corners, ids.flatten()):
                 center = c[0].mean(axis=0)
-                points.append({"x": float(center[0]), "y": float(center[1]), "id": int(i)})
+                points.append({
+                    "x": float(center[0]),
+                    "y": float(center[1]),
+                    "id": int(i),
+                    "local_x": 0.0,
+                    "local_y": 0.0,
+                })
         return points
 
     pattern_funcs = {

@@ -152,7 +152,16 @@ Detect calibration patterns such as ChArUco boards, circle grids, chessboards an
   "algo_version": "string",
   "params_hash": "string",
   "count": 0,               // Number of pattern points detected
-  "points": [],             // Detected points with optional IDs
+  "points": [               // Detected points with optional IDs
+    {
+      "x": 0.0,
+      "y": 0.0,
+      "local_x": 0.0,
+      "local_y": 0.0,
+      "local_z": 0.0,      // local_z may be omitted for planar patterns
+      "id": 0              // present for Charuco and AprilTag
+    }
+  ],
   "overlay_png": "string"   // Base64 encoded PNG (if requested)
 }
 ```
