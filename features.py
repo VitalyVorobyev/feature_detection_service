@@ -116,7 +116,7 @@ def detect_charuco(gray: np.ndarray, squares_x=21, squares_y=21,
 
     pts = ch_corners.reshape(-1, 2).astype(np.float32)
     ids = ch_ids.reshape(-1).astype(np.int32)
-    objpts = board.chessboardCorners[ids].astype(np.float32)
+    objpts = board.getChessboardCorners()[ids].astype(np.float32)
 
     overlay = None
     if return_overlay:

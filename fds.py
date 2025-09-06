@@ -30,7 +30,6 @@ class DetectReq(BaseModel):
     params: dict = {}
     return_overlay: bool = False
 
-
 class PatternDetectReq(BaseModel):
     image_id: str
     pattern: str = Field(description="charuco|circle_grid|chessboard|apriltag")

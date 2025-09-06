@@ -14,11 +14,12 @@ def test_detect_pattern_charuco(mock_get, mock_detect_charuco, sample_image):
     mock_resp = MagicMock(); mock_resp.status_code = 200; mock_resp.content = img_encoded.tobytes()
     mock_get.return_value = mock_resp
     # mock_detect_charuco returns (corners, ids, objpts, overlay)
+    # corners: (N,2) float32, ids: (N,) int32, objpts: (N,3) float32, overlay: image or None
     mock_detect_charuco.return_value = (
-        np.array([[0.5, 0.5]], dtype=np.float32),
-        np.array([1], dtype=np.int32),
-        np.array([[0.0, 0.0, 0.0]], dtype=np.float32),
-        None
+        np.array([[0.5, 0.5]], dtype=np.float32),     # corners (N,2)
+        np.array([1], dtype=np.int32),                # ids (N,)
+        np.array([[0.0, 0.0, 0.0]], dtype=np.float32), # objpts (N,3)
+        None                                          # overlay
     )
     response = client.post('/detect_pattern', json={'image_id':'id1','pattern':'charuco','params':{}})
     assert response.status_code == 200
