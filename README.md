@@ -45,7 +45,7 @@ The service works in conjunction with an Image Storage Service (ISS) to retrieve
 The service requires an [Image Storage Service (ISS)](https://github.com/VitalyVorobyev/image_store_service) to be available. Set the ISS URL through an environment variable:
 
 ```bash
-# Default: http://localhost:8081
+# Default: http://localhost:8000
 export ISS_URL=http://your-iss-service:port
 ```
 

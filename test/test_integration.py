@@ -40,7 +40,7 @@ class TestIntegration:
                 "return_overlay": True
             }
         )
-        
+
         # Check response
         assert response.status_code == 200
         data = response.json()
@@ -50,15 +50,15 @@ class TestIntegration:
         assert "overlay_png" in data
         assert data["overlay_png"].startswith("data:image/png;base64,")
         assert data["features_artifact_id"] == "test_artifact_id"
-        
+
         # Verify mock calls
-        mock_get.assert_called_once_with("http://localhost:8081/images/test_image_123", timeout=30)
+        mock_get.assert_called_once_with("http://localhost:8000/images/test_image_123", timeout=30)
         mock_post.assert_called_once()
         # Verify the POST contains the expected metadata
         assert "meta=" in mock_post.call_args[0][0]
         # The file content is binary, so we should just check the POST was called with files
         assert "file" in mock_post.call_args[1]["files"]
-    
+
     @patch('fds.requests.get')
     @patch('fds.requests.post')
     def test_no_features_detected(self, mock_post, mock_get):
@@ -67,17 +67,17 @@ class TestIntegration:
         """
         # Create a test client
         client = TestClient(app)
-        
+
         # Create a blank image with no features
         blank_image = np.zeros((50, 50, 3), dtype=np.uint8)
         _, img_encoded = cv2.imencode('.png', blank_image)
-        
+
         # Setup mock for image loading
         mock_get_response = MagicMock()
         mock_get_response.status_code = 200
         mock_get_response.content = img_encoded.tobytes()
         mock_get.return_value = mock_get_response
-        
+
         # Test request
         response = client.post(
             "/detect",
@@ -87,17 +87,17 @@ class TestIntegration:
                 "params": {"n_features": 10}
             }
         )
-        
+
         # Check response
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 0
         assert data["summary"] == []
         assert data["features_artifact_id"] is None
-        
+
         # Verify that POST was not called (no artifacts to store)
         mock_post.assert_not_called()
-    
+
     @pytest.mark.parametrize("algo_name", ["orb", "sift", "akaze", "brisk"])
     @patch('fds.requests.get')
     @patch('fds.requests.post')
@@ -107,17 +107,17 @@ class TestIntegration:
         """
         # Create a test client
         client = TestClient(app)
-        
+
         # Setup mock for image loading
         _, img_encoded = cv2.imencode('.png', sample_image)
         mock_get_response = MagicMock()
         mock_get_response.status_code = 200
         mock_get_response.content = img_encoded.tobytes()
         mock_get.return_value = mock_get_response
-        
+
         # Setup mock for artifact storage
         mock_post.return_value = mock_artifact_response
-        
+
         # Test request with the current algorithm
         response = client.post(
             "/detect",
@@ -127,14 +127,14 @@ class TestIntegration:
                 "params": {}
             }
         )
-        
+
         # Check response
         assert response.status_code == 200
         data = response.json()
         assert data["algo"] == algo_name
         assert "algo_version" in data
         assert data["count"] > 0  # All algorithms should detect features in our sample image
-        
+
         # Reset mocks for the next iteration
         mock_get.reset_mock()
         mock_post.reset_mock()

@@ -7,15 +7,19 @@ from fds import app
 
 client = TestClient(app)
 
-@patch('fds.cv2.aruco.interpolateCornersCharuco')
-@patch('fds.cv2.aruco.detectMarkers')
+@patch('fds.detect_charuco')
 @patch('fds.requests.get')
-def test_detect_pattern_charuco(mock_get, mock_detect, mock_interp, sample_image):
+def test_detect_pattern_charuco(mock_get, mock_detect_charuco, sample_image):
     _, img_encoded = cv2.imencode('.png', sample_image)
     mock_resp = MagicMock(); mock_resp.status_code = 200; mock_resp.content = img_encoded.tobytes()
     mock_get.return_value = mock_resp
-    mock_detect.return_value = ([np.zeros((1,4,2), dtype=np.float32)], np.array([[1]]), None)
-    mock_interp.return_value = (True, np.array([[[0.5,0.5]]], dtype=np.float32), np.array([1]))
+    # mock_detect_charuco returns (corners, ids, overlay)
+    # corners: (N,2) float32, ids: (N,) int32, overlay: image or None
+    mock_detect_charuco.return_value = (
+        np.array([[0.5, 0.5]], dtype=np.float32),  # corners (N,2)
+        np.array([1], dtype=np.int32),             # ids (N,)
+        None                                       # overlay
+    )
     response = client.post('/detect_pattern', json={'image_id':'id1','pattern':'charuco','params':{}})
     assert response.status_code == 200
     data = response.json()
