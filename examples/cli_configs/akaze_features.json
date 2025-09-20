@@ -1,0 +1,7 @@
+{
+  "image_directory": "samples/akaze_images",
+  "feature_type": "akaze",
+  "feature_params": {},
+  "extensions": ["png", "jpg"],
+  "output_file": "outputs/akaze_features.json"
+}

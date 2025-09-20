@@ -1,0 +1,11 @@
+{
+  "image_directory": "samples/orb_images",
+  "feature_type": "orb",
+  "feature_params": {
+    "n_features": 1500,
+    "scaleFactor": 1.2,
+    "nlevels": 8
+  },
+  "extensions": ["png", "jpg", "jpeg"],
+  "output_file": "outputs/orb_features.json"
+}

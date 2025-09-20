@@ -2,11 +2,11 @@
 
 [![FDS - Continuous Integration](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml)
 
-A (micro)service for detecting and extracting features from images using computer vision algorithms.
+A toolkit for detecting and extracting features from images using computer vision algorithms.
 
 ## Overview
 
-Feature Detection Service is a FastAPI-based application that provides image feature and pattern detection capabilities through a RESTful API. It supports multiple feature detection algorithms from OpenCV such as ORB, SIFT, AKAZE, and BRISK as well as pattern detectors for ChArUco boards, circle grids, chessboards, and AprilTags.
+Feature Detection Service is a FastAPI-based application and companion CLI that provide image feature and pattern detection capabilities. It supports multiple feature detection algorithms from OpenCV such as ORB, SIFT, AKAZE, and BRISK as well as pattern detectors for ChArUco boards, circle grids, chessboards, and AprilTags.
 
 The service works in conjunction with an Image Storage Service (ISS) to retrieve images and store feature detection results.
 
@@ -14,6 +14,7 @@ The service works in conjunction with an Image Storage Service (ISS) to retrieve
 
 - Feature detection using multiple algorithms (ORB, SIFT, AKAZE, BRISK)
 - Pattern detection for calibration targets (ChArUco, circle grid, chessboard, AprilTag)
+- Config-driven CLI for batch feature extraction with progress feedback (tqdm) and rich logging (spdlog/stdlib)
 - Customizable algorithm parameters
 - Storage of feature keypoints and descriptors
 - Optional visualization with feature overlay generation
@@ -48,6 +49,39 @@ The service requires an [Image Storage Service (ISS)](https://github.com/VitalyV
 # Default: http://localhost:8000
 export ISS_URL=http://your-iss-service:port
 ```
+
+## Command Line Interface
+
+Alongside the API, the repository provides a JSON-driven CLI in `fds_cli.py` for offline or batch processing. The CLI uses `tqdm` to show progress bars and prefers `spdlog` for structured console output (falling back to the Python logging module automatically).
+
+### Usage
+
+```bash
+python fds_cli.py path/to/config.json --log-level INFO
+```
+
+Use `--log-level DEBUG` to surface per-image details that complement the progress bar.
+
+### Configuration Schema
+
+Each config file is a JSON object with the following keys:
+
+- `image_directory` (str): Folder containing images to process.
+- `feature_type` (str): One of `orb`, `sift`, `akaze`, `brisk`, or `charuco`.
+- `feature_params` (object): Parameters forwarded to the detector (pass `{}` when none are required).
+- `output_file` (str): Path (relative to the config file) for the generated JSON results.
+- `extensions` (array of str, optional): Restrict the image extensions to scan (defaults to common formats).
+
+### Example Configs
+
+Ready-to-tweak examples live in `examples/cli_configs/`:
+
+- `examples/cli_configs/orb_features.json` – ORB keypoints with elevated feature count.
+- `examples/cli_configs/sift_features.json` – SIFT descriptors for TIFF/PNG datasets.
+- `examples/cli_configs/akaze_features.json` – AKAZE keypoints with default parameters.
+- `examples/cli_configs/charuco_board.json` – ChArUco board corner extraction with board geometry specified.
+
+Adjust the `image_directory` to point at your data and select an `output_file` location before running the CLI.
 
 ## Running the Service
 
@@ -288,6 +322,14 @@ curl -X 'POST' \
   "return_overlay": true
 }'
 ```
+
+### CLI (Batch Processing)
+
+```bash
+python fds_cli.py examples/cli_configs/orb_features.json --log-level INFO
+```
+
+The command reads the example config, walks the `image_directory`, and writes detections to the configured output path while displaying a progress bar when multiple images are present.
 
 ## License
 

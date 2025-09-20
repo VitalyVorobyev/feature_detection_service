@@ -1,0 +1,9 @@
+{
+  "image_directory": "samples/sift_images",
+  "feature_type": "sift",
+  "feature_params": {
+    "n_features": 1200
+  },
+  "extensions": ["tif", "tiff", "png"],
+  "output_file": "outputs/sift_features.json"
+}

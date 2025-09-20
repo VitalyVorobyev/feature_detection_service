@@ -9,3 +9,5 @@ opencv-contrib-python
 numpy
 pydantic
 requests
+py-spdlog
+tqdm
