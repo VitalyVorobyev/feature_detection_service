@@ -1,6 +1,9 @@
-import pytest
-import numpy as np
+"""Shared pytest fixtures for the feature detection test suite."""
+
 from unittest.mock import MagicMock
+
+import numpy as np
+import pytest
 
 @pytest.fixture
 def sample_image():

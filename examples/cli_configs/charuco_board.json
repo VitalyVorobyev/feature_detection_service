@@ -1,0 +1,13 @@
+{
+  "image_directory": "samples/charuco",
+  "feature_type": "charuco",
+  "feature_params": {
+    "squares_x": 11,
+    "squares_y": 8,
+    "square_length": 35.0,
+    "marker_length": 25.0,
+    "dictionary": "DICT_5X5_1000"
+  },
+  "extensions": ["png", "jpg", "jpeg"],
+  "output_file": "outputs/charuco_detection.json"
+}
