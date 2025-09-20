@@ -1,0 +1,6 @@
+[MASTER]
+extension-pkg-allow-list=cv2,cv2.aruco,spdlog
+
+[TYPECHECK]
+ignored-modules=cv2,cv2.cv2,cv2.aruco,spdlog
+generated-members=cv2.*,cv2.aruco.*,spdlog.*

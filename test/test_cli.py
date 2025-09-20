@@ -1,3 +1,5 @@
+"""CLI-focused tests for the batch feature extraction tool."""
+
 import json
 from pathlib import Path
 
@@ -9,15 +11,18 @@ import fds_cli
 
 
 def _write_config(path: Path, config: dict) -> Path:
+    """Persist *config* to *path* as JSON and return the path."""
+
     path.write_text(json.dumps(config), encoding="utf-8")
     return path
 
 
-def test_cli_orb_detection(tmp_path):
+def test_cli_orb_detection(tmp_path: Path) -> None:
+    """Execute the CLI for an ORB configuration and validate output."""
+
     image_dir = tmp_path / "images"
     image_dir.mkdir()
 
-    # random texture gives ORB plenty of keypoints
     img = np.random.randint(0, 256, size=(128, 128, 3), dtype=np.uint8)
     image_path = image_dir / "noise.png"
     assert cv2.imwrite(str(image_path), img)
@@ -45,7 +50,9 @@ def test_cli_orb_detection(tmp_path):
     assert first["file"].endswith("noise.png")
 
 
-def test_cli_charuco_detection(tmp_path, monkeypatch):
+def test_cli_charuco_detection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure ChArUco detection path runs with a stubbed backend."""
+
     image_dir = tmp_path / "charuco_imgs"
     image_dir.mkdir()
 
@@ -53,7 +60,7 @@ def test_cli_charuco_detection(tmp_path, monkeypatch):
     image_path = image_dir / "blank.png"
     assert cv2.imwrite(str(image_path), img)
 
-    def fake_detect(gray, **kwargs):
+    def fake_detect(_gray, **_kwargs):
         points = np.array([[10.0, 15.0]], dtype=np.float32)
         ids = np.array([42], dtype=np.int32)
         objs = np.array([[0.0, 0.0, 0.0]], dtype=np.float32)
@@ -89,8 +96,13 @@ def test_cli_charuco_detection(tmp_path, monkeypatch):
     assert points[0]["local_z"] == 0.0
 
 
-@pytest.mark.parametrize("bad_field", ["image_directory", "feature_type", "feature_params", "output_file"])
-def test_cli_missing_config_field(tmp_path, bad_field):
+@pytest.mark.parametrize(
+    "bad_field",
+    ["image_directory", "feature_type", "feature_params", "output_file"],
+)
+def test_cli_missing_config_field(tmp_path: Path, bad_field: str) -> None:
+    """Missing config keys should raise a ValueError."""
+
     config = {
         "image_directory": "images",
         "feature_type": "orb",

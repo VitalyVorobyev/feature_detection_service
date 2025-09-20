@@ -1,6 +1,6 @@
 # Feature Detection Service (FDS)
 
-[![FDS - Continuous Integration](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml)
+[![FDS - Continuous Integration](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml) [![Pylint](https://img.shields.io/badge/pylint-checked-brightgreen)](https://github.com/PyCQA/pylint)
 
 A toolkit for detecting and extracting features from images using computer vision algorithms.
 
@@ -82,6 +82,31 @@ Ready-to-tweak examples live in `examples/cli_configs/`:
 - `examples/cli_configs/charuco_board.json` – ChArUco board corner extraction with board geometry specified.
 
 Adjust the `image_directory` to point at your data and select an `output_file` location before running the CLI.
+
+### Linting
+
+Run pylint locally with the helper script:
+
+```bash
+scripts/run_pylint.sh
+```
+
+The CI workflow executes the same script, so keeping it clean locally avoids surprises in pull requests.
+
+If you plan to use the CLI with the optional `spdlog` dependency, ensure your Python environment has development headers available before installing requirements. For example, on Debian/Ubuntu-based systems:
+
+```bash
+sudo apt-get update
+sudo apt-get install python3-dev build-essential
+```
+
+Recreate (or reinstall inside) your virtual environment afterwards:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## Running the Service
 
