@@ -9,6 +9,6 @@ opencv-contrib-python
 numpy
 pydantic
 requests
-spdlog
+loguru
 tqdm
 pylint

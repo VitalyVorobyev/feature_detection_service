@@ -1,0 +1,26 @@
+[project]
+name = "feature_detection_service"
+version = "0.1.0"
+description = "A service for feature detection in images."
+authors = [
+    { name = "Vitaly Vorobyev" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "opencv-python",
+    "numpy",
+    "pytest"
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "test"
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
