@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 - TBD
 
-## [v0.1.0] - 2025-10-05
+## [v0.1.1] - 2025-10-05
 ### Added
 - Initial public release of Feature Detection Service container image with multi-arch support.
 - `/health` endpoint exposed for uptime probing and monitoring.
@@ -18,4 +18,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ### Notes
 - Health endpoint: `GET /health` returns `{ "ok": true }` with HTTP 200.
 
-[v0.1.0]: https://github.com/VitalyVorobyev/image_store_service/releases/tag/v0.1.0
+[v0.1.1]: https://github.com/VitalyVorobyev/image_store_service/releases/tag/v0.1.1
