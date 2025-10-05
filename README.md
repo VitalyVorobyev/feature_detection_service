@@ -1,6 +1,6 @@
 # Feature Detection Service (FDS)
 
-[![FDS - Continuous Integration](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml) [![Pylint](https://img.shields.io/badge/pylint-checked-brightgreen)](https://github.com/PyCQA/pylint)
+[![FDS - Continuous Integration](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml/badge.svg)](https://github.com/VitalyVorobyev/feature_detection_service/actions/workflows/ci.yml) [![Pylint](https://img.shields.io/badge/pylint-checked-brightgreen)](https://github.com/PyCQA/pylint) [![codecov](https://codecov.io/gh/VitalyVorobyev/feature_detection_service/branch/main/graph/badge.svg)](https://codecov.io/gh/VitalyVorobyev/feature_detection_service)
 
 A toolkit for detecting and extracting features from images using computer vision algorithms.
 
