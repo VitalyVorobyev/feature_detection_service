@@ -1,0 +1,25 @@
+services:
+  image-store:
+    image: ghcr.io/vitalyvorobyev/feature_detection_service:latest
+    restart: unless-stopped
+    environment:
+      FDS_DATA: /var/lib/fds
+      ISS_URL: http://image-storage-service:8000
+    volumes:
+      - fds-data:/var/lib/fds
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+volumes:
+  fds-data:
+    driver: local

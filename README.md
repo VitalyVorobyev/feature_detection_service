@@ -14,7 +14,7 @@ The service works in conjunction with an Image Storage Service (ISS) to retrieve
 
 - Feature detection using multiple algorithms (ORB, SIFT, AKAZE, BRISK)
 - Pattern detection for calibration targets (ChArUco, circle grid, chessboard, AprilTag)
-- Config-driven CLI for batch feature extraction with progress feedback (tqdm) and rich logging (spdlog/stdlib)
+- Config-driven CLI for batch feature extraction with progress feedback (tqdm) and rich logging (loguru/stdlib)
 - Customizable algorithm parameters
 - Storage of feature keypoints and descriptors
 - Optional visualization with feature overlay generation
@@ -50,9 +50,11 @@ The service requires an [Image Storage Service (ISS)](https://github.com/VitalyV
 export ISS_URL=http://your-iss-service:port
 ```
 
+Container deployments can reuse the provided `example.env` file. Update the `ISS_URL` value before loading it so the service can reach your Image Storage Service. The published Docker image also accepts an `ISS_URL` build argument, defaulting to `http://localhost:8000` when not supplied.
+
 ## Command Line Interface
 
-Alongside the API, the repository provides a JSON-driven CLI in `fds_cli.py` for offline or batch processing. The CLI uses `tqdm` to show progress bars and prefers `spdlog` for structured console output (falling back to the Python logging module automatically).
+Alongside the API, the repository provides a JSON-driven CLI in `fds_cli.py` for offline or batch processing. The CLI uses `tqdm` to show progress bars and prefers `loguru` for structured console output (falling back to the Python logging module automatically).
 
 ### Usage
 
@@ -93,7 +95,7 @@ scripts/run_pylint.sh
 
 The CI workflow executes the same script, so keeping it clean locally avoids surprises in pull requests.
 
-If you plan to use the CLI with the optional `spdlog` dependency, ensure your Python environment has development headers available before installing requirements. For example, on Debian/Ubuntu-based systems:
+If you plan to use the CLI with the optional `loguru` dependency, ensure your Python environment has development headers available before installing requirements. For example, on Debian/Ubuntu-based systems:
 
 ```bash
 sudo apt-get update

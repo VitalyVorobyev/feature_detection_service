@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
@@ -15,16 +16,9 @@ from fds import algo_version, algos, make_detector, params_hash
 from features import detect_charuco
 
 try:  # pragma: no cover - optional dependency
-    import spdlog  # type: ignore
+    from loguru import logger as loguru_logger  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
-    spdlog = None
-
-SPDLOG_LOGGER = None
-if spdlog is not None:  # pragma: no cover - optional dependency
-    try:
-        SPDLOG_LOGGER = spdlog.ConsoleLogger("fds-cli")
-    except RuntimeError:
-        SPDLOG_LOGGER = spdlog.get("fds-cli")
+    loguru_logger = None
 
 try:  # pragma: no cover - optional dependency
     from tqdm import tqdm  # type: ignore
@@ -52,14 +46,17 @@ class LoggerProxy:
         self._backend = logging.getLogger("fds_cli")
 
     def configure(self, level_name: str) -> None:
-        """Update the underlying backend depending on optional spdlog support."""
+        """Update the underlying backend depending on optional loguru support."""
 
         level = level_name.upper()
-        if SPDLOG_LOGGER is not None:
-            log_levels = getattr(spdlog, "LogLevel")
-            log_level = getattr(log_levels, level, getattr(log_levels, "INFO"))
-            SPDLOG_LOGGER.set_level(log_level)
-            self._backend = SPDLOG_LOGGER
+        if loguru_logger is not None:
+            loguru_logger.remove()
+            loguru_logger.add(
+                sys.stderr,
+                level=level,
+                format="{time:HH:mm:ss} | {level} | {message}",
+            )
+            self._backend = loguru_logger
             return
 
         python_level = getattr(logging, level, logging.INFO)
