@@ -1,4 +1,5 @@
 fastapi
+uvicorn[standard]
 pillow
 pytest
 pytest-mock
@@ -9,6 +10,6 @@ opencv-contrib-python
 numpy
 pydantic
 requests
-spdlog
+loguru
 tqdm
 pylint
