@@ -11,6 +11,8 @@ tar -czf "$DIST_DIR/$BUNDLE_NAME" \
     README.md \
     requirements.txt \
     fds.py \
+    fds_cli.py \
+    features.py \
     example.env
 
 echo "Created $DIST_DIR/$BUNDLE_NAME"
